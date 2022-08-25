@@ -1,6 +1,6 @@
 import React from "react";
 import io from "socket.io-client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -10,9 +10,22 @@ import Form from "react-bootstrap/Form";
 const socket = io.connect("http://localhost:8000");
 
 function Game() {
+  const checkResult = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
   const [count, setCount] = useState(0);
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [turn, setTurn] = useState(true);
+  const [winner, setWinner] = useState("");
+  const winningCharacter = useRef("X");
   const [data, setData] = useState([
     {
       id: "00",
@@ -52,14 +65,59 @@ function Game() {
     },
   ]);
 
+  const resultChecker = (data) => {
+    for (var i = 0; i < checkResult.length; i++) {
+      if (
+        data[checkResult[i][0]].value === data[checkResult[i][1]].value &&
+        data[checkResult[i][1]].value === data[checkResult[i][2]].value &&
+        data[checkResult[i][0]].value !== ""
+      ) {
+        if (winningCharacter.current === data[checkResult[i][0]].value) {
+          setWinner("You won the Game");
+        } else {
+          setWinner("Your opponent won the Game");
+        }
+        setTurn(false);
+        break;
+      }
+    }
+  };
   useEffect(() => {
     socket.on("recieveData", (data) => {
       setData(data.data);
       setCount(data.tmp);
+      setTurn(true);
+      resultChecker(data.data);
     });
+    return () => {
+      socket.off("recieveData");
+    };
   }, []);
 
+  useEffect(() => {
+    socket.on("recieveCoinToss", (data) => {
+      if (!data.value) {
+        winningCharacter.current = "O";
+        setTurn(false);
+      }
+    });
+    return () => {
+      socket.off("recieveCoinToss");
+    };
+  }, []);
+
+  const coinToss = () => {
+    var num = Math.floor(Math.random() * 1000);
+    if (num % 2 === 0) {
+      socket.emit("sendCoinToss", { value: false, joinCode });
+    } else {
+      setTurn(false);
+      winningCharacter.current = "O";
+    }
+  };
+
   const handleClick = (key) => {
+    if (!turn) return;
     for (var i = 0; i < 9; i++) {
       if (data[i].id === key && data[i].value === "") {
         if (count % 2 === 0) {
@@ -67,13 +125,15 @@ function Game() {
         } else {
           data[i].value = "O";
         }
-        setData(data);
-        const tmp = count + 1;
-        socket.emit("sendData", { data, tmp, joinCode });
-        setCount(count + 1);
         break;
       }
     }
+    setData(data);
+    const tmp = count + 1;
+    socket.emit("sendData", { data, tmp, joinCode });
+    setCount(count + 1);
+    setTurn(false);
+    resultChecker(data);
   };
 
   const generateCode = (length) => {
@@ -98,11 +158,19 @@ function Game() {
     e.preventDefault();
     setCreateCode(joinCode);
     socket.emit("join_room", joinCode);
+    coinToss();
   };
 
   return (
     <>
       <Container>
+        <Row>
+          <Col className="d-flex align-items-center justify-content-center">
+            {turn && winner.length === 0 && <div>Your Turn</div>}
+            {!turn && winner.length === 0 && <div>Opponent's Turn</div>}
+            {winner.length > 0 && <div>{winner}</div>}
+          </Col>
+        </Row>
         <Row
           style={{
             margin: "0% 25% 0% 25%",
@@ -214,11 +282,15 @@ function Game() {
                 <Form.Text className="text-muted">{createCode}</Form.Text>
               </Form.Group>
 
-              <Form.Group className="mb-3">
+              <Form.Group>
                 <Button variant="primary" type="submit">
                   Join Game
                 </Button>
-                <Button onClick={createJoinCode} variant="primary">
+                <Button
+                  className="mx-5"
+                  onClick={createJoinCode}
+                  variant="primary"
+                >
                   Create Game
                 </Button>
               </Form.Group>

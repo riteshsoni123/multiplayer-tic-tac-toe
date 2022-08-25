@@ -19,7 +19,11 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   socket.on("sendData", (data) => {
-    io.to(data.joinCode).emit("recieveData", data);
+    socket.broadcast.to(data.joinCode).emit("recieveData", data);
+  });
+
+  socket.on("sendCoinToss", (data) => {
+    socket.broadcast.to(data.joinCode).emit("recieveCoinToss", data);
   });
 
   socket.on("create_room", (roomId) => {
