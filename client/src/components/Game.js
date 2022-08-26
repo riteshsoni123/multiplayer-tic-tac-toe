@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import io from "socket.io-client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -10,22 +10,12 @@ import Form from "react-bootstrap/Form";
 const socket = io.connect("http://localhost:8000");
 
 function Game() {
-  const checkResult = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
   const [count, setCount] = useState(0);
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [turn, setTurn] = useState(true);
   const [winner, setWinner] = useState("");
-  const winningCharacter = useRef("X");
+  const [winningCharacter, setWinningCharacter] = useState("X");
   const [data, setData] = useState([
     {
       id: "00",
@@ -65,54 +55,68 @@ function Game() {
     },
   ]);
 
-  const resultChecker = (data) => {
-    for (var i = 0; i < checkResult.length; i++) {
-      if (
-        data[checkResult[i][0]].value === data[checkResult[i][1]].value &&
-        data[checkResult[i][1]].value === data[checkResult[i][2]].value &&
-        data[checkResult[i][0]].value !== ""
-      ) {
-        if (winningCharacter.current === data[checkResult[i][0]].value) {
-          setWinner("You won the Game");
-        } else {
-          setWinner("Your opponent won the Game");
+  const resultChecker = useCallback(
+    (data) => {
+      const checkResult = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+      // console.count(winningCharacter);
+      try {
+        for (var i = 0; i < checkResult.length; i++) {
+          if (
+            data[checkResult[i][0]].value === data[checkResult[i][1]].value &&
+            data[checkResult[i][1]].value === data[checkResult[i][2]].value &&
+            data[checkResult[i][0]].value !== ""
+          ) {
+            if (winningCharacter === data[checkResult[i][0]].value) {
+              setWinner("You won the Game");
+            } else {
+              setWinner("Your opponent won the Game");
+            }
+            setTurn(false);
+            break;
+          }
         }
-        setTurn(false);
-        break;
+      } catch (err) {
+        console.log("error occured here");
       }
-    }
-  };
+    },
+    [winningCharacter]
+  );
+
   useEffect(() => {
     socket.on("recieveData", (data) => {
+      setCount(count + 1);
       setData(data.data);
-      setCount(data.tmp);
       setTurn(true);
       resultChecker(data.data);
     });
-    return () => {
-      socket.off("recieveData");
-    };
-  }, []);
+  }, [count, turn, data, resultChecker]);
 
   useEffect(() => {
     socket.on("recieveCoinToss", (data) => {
       if (!data.value) {
-        winningCharacter.current = "O";
+        setWinningCharacter("O");
         setTurn(false);
       }
     });
-    return () => {
-      socket.off("recieveCoinToss");
-    };
-  }, []);
+  }, [setWinningCharacter, turn]);
 
   const coinToss = () => {
     var num = Math.floor(Math.random() * 1000);
+    // var num = 22;
     if (num % 2 === 0) {
       socket.emit("sendCoinToss", { value: false, joinCode });
     } else {
-      setTurn(false);
-      winningCharacter.current = "O";
+      setTurn((prevState) => (prevState = false));
+      setWinningCharacter("O");
     }
   };
 
@@ -131,8 +135,8 @@ function Game() {
     setData(data);
     const tmp = count + 1;
     socket.emit("sendData", { data, tmp, joinCode });
-    setCount(count + 1);
     setTurn(false);
+    setCount(count + 1);
     resultChecker(data);
   };
 
