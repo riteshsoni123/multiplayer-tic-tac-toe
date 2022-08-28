@@ -10,35 +10,42 @@ import RegisterScreen from "./components/screens/RegisterScreen";
 import ForgotPasswordScreen from "./components/screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "./components/screens/ResetPasswordScreen";
 
+import Game from "./components/Game";
+import Navigationbar from "./components/Navigationbar";
+
 function App() {
   return (
-    <Router>
-      <div className="app">
-        <Routes>
-          <Route
-            exact
-            path="/"
-            element={
-              <PrivateRoute>
-                <PrivateScreen />
-              </PrivateRoute>
-            }
-          />
-          <Route exact path="/login" element={<LoginScreen />} />
-          <Route exact path="/register" element={<RegisterScreen />} />
-          <Route
-            exact
-            path="/forgotpassword"
-            element={<ForgotPasswordScreen />}
-          />
-          <Route
-            exact
-            path="/passwordreset/:resetToken"
-            element={<ResetPasswordScreen />}
-          />
-        </Routes>
-      </div>
-    </Router>
+    <>
+      <Navigationbar />
+      <Router>
+        <div className="app">
+          <Routes>
+            <Route
+              exact
+              path="/"
+              element={
+                <PrivateRoute>
+                  <PrivateScreen />
+                </PrivateRoute>
+              }
+            />
+            <Route exact path="/login" element={<LoginScreen />} />
+            <Route exact path="/register" element={<RegisterScreen />} />
+            <Route
+              exact
+              path="/forgotpassword"
+              element={<ForgotPasswordScreen />}
+            />
+            <Route
+              exact
+              path="/passwordreset/:resetToken"
+              element={<ResetPasswordScreen />}
+            />
+            <Route exact path="/game" element={<Game />} />
+          </Routes>
+        </div>
+      </Router>
+    </>
   );
 }
 

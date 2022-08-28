@@ -9,7 +9,7 @@ const PrivateScreen = () => {
 
   useEffect(() => {
     if (!localStorage.getItem("authToken")) {
-      navigate("/login");
+      navigate("/game");
     }
 
     const fetchPrivateData = async () => {
@@ -33,7 +33,7 @@ const PrivateScreen = () => {
 
   const logoutHandler = () => {
     localStorage.removeItem("authToken");
-    navigate("/login");
+    navigate("/game");
   };
 
   return error ? (
