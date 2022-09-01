@@ -29,20 +29,15 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+  const id = socket.handshake.query.senderId;
+  socket.join(id);
+
   socket.on("sendData", (data) => {
-    socket.broadcast.to(data.joinCode).emit("recieveData", data);
+    socket.broadcast.to(data.id).emit("recieveData", data);
   });
 
   socket.on("sendCoinToss", (data) => {
-    socket.broadcast.to(data.joinCode).emit("recieveCoinToss", data);
-  });
-
-  socket.on("create_room", (roomId) => {
-    socket.join(roomId);
-  });
-
-  socket.on("join_room", (roomId) => {
-    socket.join(roomId);
+    socket.broadcast.to(data.id).emit("recieveCoinToss", data.value);
   });
 });
 
