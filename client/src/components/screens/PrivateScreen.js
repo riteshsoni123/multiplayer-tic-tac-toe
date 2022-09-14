@@ -1,8 +1,10 @@
 import { React, useState, useEffect } from "react";
 import axios from "../../axios";
 import { useNavigate } from "react-router-dom";
+import DataPieChart from "../DataPieChart";
 
 const PrivateScreen = () => {
+  // const { setName } = props;
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [privateData, setPrivateData] = useState("");
@@ -22,6 +24,7 @@ const PrivateScreen = () => {
 
       try {
         const { data } = await axios.get("/api/private", config);
+        // setName(data.email);
         setPrivateData(data);
       } catch (error) {
         localStorage.removeItem("authToken");
@@ -31,11 +34,6 @@ const PrivateScreen = () => {
     fetchPrivateData();
   }, [navigate]);
 
-  const logoutHandler = () => {
-    localStorage.removeItem("authToken");
-    navigate("/game");
-  };
-
   return error ? (
     <>
       {console.log(error)}
@@ -43,9 +41,13 @@ const PrivateScreen = () => {
     </>
   ) : (
     <>
-      <div>{privateData.email}</div>
-      <div>{privateData.username}</div>
-      <button onClick={logoutHandler}>Logout</button>
+      <DataPieChart
+        email={privateData.email}
+        username={privateData.username}
+        won={privateData.won}
+        lost={privateData.lost}
+        drawn={privateData.drawn}
+      />
     </>
   );
 };

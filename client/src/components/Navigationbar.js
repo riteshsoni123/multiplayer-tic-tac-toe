@@ -15,20 +15,19 @@ function Navigationbar() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <NavDropdown title="Dropdown" id="basic-nav-dropdown">
-              {localStorage.getItem("authToken") ? (
+            {localStorage.getItem("authToken") ? (
+              <NavDropdown title="user">
                 <NavDropdown.Item href="/">User Profile</NavDropdown.Item>
-              ) : (
-                <NavDropdown.Item href="/register">Register</NavDropdown.Item>
-              )}
-              {localStorage.getItem("authToken") ? (
                 <NavDropdown.Item onClick={() => logoutHandler()} href="/">
                   Logout
                 </NavDropdown.Item>
-              ) : (
+              </NavDropdown>
+            ) : (
+              <NavDropdown title="no_user">
+                <NavDropdown.Item href="/register">Register</NavDropdown.Item>
                 <NavDropdown.Item href="/login">Login</NavDropdown.Item>
-              )}
-            </NavDropdown>
+              </NavDropdown>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>
